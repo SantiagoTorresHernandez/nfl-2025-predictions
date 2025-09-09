@@ -3,6 +3,7 @@ import argparse, json, os
 import pandas as pd
 import numpy as np
 from joblib import load
+from datetime import datetime
 from src.data.loaders import load_schedules, load_scoring_lines, compute_prev_season_team_stats
 from src.features.build_features import make_inference_frame
 from src.models.train import FEATURE_COLS
@@ -44,7 +45,8 @@ def main(season: int, week: int):
            .sort_values(["season","week","game_id"]))
     out["win_prob"] = (out["win_prob"] * 100).round(1)  # percent
 
-    csv_path = f"outputs/week_{season}_{week}_predictions.csv"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_path = f"outputs/week_{season}_{week}_predictions_{timestamp}.csv"
     out.to_csv(csv_path, index=False)
 
     print(f"\n=== Week {week} {season} Predictions ===")
@@ -54,6 +56,7 @@ def main(season: int, week: int):
         print(f"\nMODEL_ACCURACY (held-out seasons): {model_accuracy:.3f}")
     else:
         print("\nMODEL_ACCURACY not available yet (train first).")
+    print(f"\nSaved predictions to {csv_path}")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
