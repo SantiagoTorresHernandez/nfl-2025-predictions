@@ -31,7 +31,9 @@ def main(season: int, week: int):
     lines = load_scoring_lines([season])
     prev  = compute_prev_season_team_stats([season])
 
-    infer_df = make_inference_frame(week_df, prev, lines)
+    # Pass the full season schedules to compute rolling features up to the target week
+    season_sched = schedules[(schedules["season"] == season) & (schedules["game_type"] == "REG")].copy()
+    infer_df = make_inference_frame(season_sched, week_df, prev, lines)
     X = infer_df[FEATURE_COLS]
 
     # Predict home win probabilities

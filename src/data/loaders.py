@@ -58,3 +58,75 @@ def compute_prev_season_team_stats(years: list[int]) -> pd.DataFrame:
     agg["season"] = agg["season"] + 1
     agg = agg.rename(columns={"win_pct": "prev_win_pct", "pdpg": "prev_pdpg"})
     return agg[["season","team","prev_win_pct","prev_pdpg"]]
+
+
+def load_team_info() -> pd.DataFrame:
+    """
+    Load team metadata (abbr, conference, division, latitude, longitude).
+    Tries multiple nfl_data_py endpoints for compatibility across versions.
+
+    Returns a DataFrame with columns:
+      team, conference, division, latitude, longitude
+    Missing columns will be filled with fallbacks/NaNs where not available.
+    """
+    df = None
+    # Try common variants across nfl_data_py versions
+    loaders = []
+    if hasattr(nfl, "import_teams"):
+        loaders.append(nfl.import_teams)
+    if hasattr(nfl, "import_team_desc"):
+        loaders.append(nfl.import_team_desc)
+    for fn in loaders:
+        try:
+            tmp = fn()
+            if isinstance(tmp, pd.DataFrame) and len(tmp) > 0:
+                df = tmp.copy()
+                break
+        except Exception:
+            continue
+    if df is None:
+        # Fallback empty frame with expected columns
+        return pd.DataFrame({
+            "team": [],
+            "conference": [],
+            "division": [],
+            "latitude": [],
+            "longitude": [],
+        })
+
+    # Normalize column names
+    rename_map = {}
+    # team abbreviation
+    for cand in ["team", "team_abbr", "abbr", "team_short"]:
+        if cand in df.columns:
+            rename_map[cand] = "team"
+            break
+    # conference
+    for cand in ["team_conf", "conference", "conf"]:
+        if cand in df.columns:
+            rename_map[cand] = "conference"
+            break
+    # division
+    for cand in ["team_division", "division", "div"]:
+        if cand in df.columns:
+            rename_map[cand] = "division"
+            break
+    # latitude/longitude
+    for cand in ["team_lat", "lat", "latitude"]:
+        if cand in df.columns:
+            rename_map[cand] = "latitude"
+            break
+    for cand in ["team_lng", "lon", "lng", "longitude"]:
+        if cand in df.columns:
+            rename_map[cand] = "longitude"
+            break
+
+    df = df.rename(columns=rename_map)
+    # Keep only needed
+    keep = [c for c in ["team","conference","division","latitude","longitude"] if c in df.columns]
+    df = df[keep].drop_duplicates()
+    # Ensure required columns exist
+    for col in ["team","conference","division","latitude","longitude"]:
+        if col not in df.columns:
+            df[col] = np.nan
+    return df

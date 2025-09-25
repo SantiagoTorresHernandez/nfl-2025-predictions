@@ -6,7 +6,30 @@ from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
-FEATURE_COLS = ["spread_line","home_favorite","home_prev_win_pct","home_prev_pdpg","away_prev_win_pct","away_prev_pdpg"]
+FEATURE_COLS = [
+    # Vegas
+    "spread_line",
+    "home_favorite",
+    # Previous season
+    "home_prev_win_pct",
+    "home_prev_pdpg",
+    "away_prev_win_pct",
+    "away_prev_pdpg",
+    # Recent form
+    "home_recent_win_pct_3",
+    "home_recent_pdpg_3",
+    "away_recent_win_pct_3",
+    "away_recent_pdpg_3",
+    # Rest and differential
+    "home_days_rest",
+    "away_days_rest",
+    "rest_diff",
+    # Rivalry / conference
+    "divisional_game",
+    "conference_game",
+    # Travel
+    "away_travel_km",
+]
 
 def build_pipeline(random_state: int = 42) -> Pipeline:
     num_cols = FEATURE_COLS
